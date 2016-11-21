@@ -68,7 +68,7 @@
             this.outputBox.Location = new System.Drawing.Point(12, 25);
             this.outputBox.Multiline = true;
             this.outputBox.Name = "outputBox";
-            this.outputBox.Size = new System.Drawing.Size(171, 219);
+            this.outputBox.Size = new System.Drawing.Size(171, 224);
             this.outputBox.TabIndex = 4;
             // 
             // label1

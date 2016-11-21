@@ -17,8 +17,8 @@ namespace ClockTest
         delegate void SetTextCallback(string text);
 
         private SerialPort port;
+        private Thread readThread;
         private BackgroundWorker workThread;
-        private Thread readThread = null;
 
         private clock1 player1 = new clock1();
         private clock1 player2 = new clock1();
@@ -52,7 +52,7 @@ namespace ClockTest
             {
                 MessageBox.Show(startEx.Message, "Error");
             }
-            
+
             readThread = new Thread(new ThreadStart(this.Read));
             readThread.Start();
             this.workThread.RunWorkerAsync();
@@ -79,7 +79,7 @@ namespace ClockTest
             }
             catch (Exception stopEx)
             {
-                //MessageBox.Show(stopEx.Message, "Error");
+                MessageBox.Show(stopEx.Message, "Error");
             }
         }
 
@@ -100,8 +100,6 @@ namespace ClockTest
             }
             else
             {
-                //this.outputBox.Text += text;
-                //this.outputBox.Text += "\n";
                 this.outputBox.AppendText(text + "\n");
 
                 string[] values = text.Split(' ');
@@ -124,19 +122,31 @@ namespace ClockTest
                 }
                 catch (Exception readEx)
                 {
-                    //MessageBox.Show(readEx.Message, "Error");
+                    MessageBox.Show(readEx.Message, "Error");
                 }
             }
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
-            player1.Close();
-            player2.Close();
-            scenario1.Close();
-            scenario2.Close();
-            readThread = null;
-            port.Close();
+            try
+            {
+                if (readThread != null && readThread.ThreadState == ThreadState.Running)
+                {
+                    player1.Close();
+                    player2.Close();
+                    scenario1.Close();
+                    scenario2.Close();
+                    readThread.Abort();
+                }
+                if (port != null && port.IsOpen)
+                    port.Close();
+            }
+            catch (Exception closeEx)
+            {
+                MessageBox.Show(closeEx.Message, "Error");
+            }
+
         }
 
         private void windowSetup()
@@ -168,20 +178,38 @@ namespace ClockTest
 
         private void p1NameBtn_Click(object sender, EventArgs e)
         {
+            if (player1Name.Text.Length > 8)
+            {
+                MessageBox.Show("Player 1 name is too long", "Warning");
+                return;
+            }
             string output = "#" + player1Name.Text.Replace(" ", "") + "#";
             port.Write(output);
         }
 
         private void p2NameBtn_Click(object sender, EventArgs e)
         {
+            if (player2Name.Text.Length > 8)
+            {
+                MessageBox.Show("Player 2 name is too long", "Warning");
+                return;
+            }
             string output = "$" + player2Name.Text.Replace(" ", "") + "$";
             port.Write(output);
         }
 
         private void playerTimeBtn_Click(object sender, EventArgs e)
         {
-            string output = "%" + playerTime.Text.Replace(" ","") + "%";
+            int time;
+            if (!int.TryParse(playerTime.Text, out time))
+            {
+                MessageBox.Show("Player Time is not a number", "Warning");
+                return;
+            }
+            string output = time.ToString();
+            output = "%" + output + "%";
             port.Write(output);
         }
+
     }
 }
